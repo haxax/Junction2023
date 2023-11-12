@@ -13,6 +13,7 @@ public class DebugLocationTracker : MonoBehaviour
 
 	private void Start()
 	{
+		if (!Application.isMobilePlatform) { this.enabled = false; }
 		LocationManager.Instance.OnLocationChanged += LocationUpdate;
 		timer = frequency;
 	}
@@ -33,7 +34,9 @@ public class DebugLocationTracker : MonoBehaviour
 
 		debugTxt.text = $"Updates: {updateCounter} Fails: {failedUpdateCounter}" +
 			$"\n X: {location.CurrentCoordinate.x} ({location.CurrentCoordinate.x - location.PreviousCoordinate.x})" +
-			$"   -   Y: {location.CurrentCoordinate.y} ({location.CurrentCoordinate.y - location.PreviousCoordinate.y})";
+			$"   -   Y: {location.CurrentCoordinate.y} ({location.CurrentCoordinate.y - location.PreviousCoordinate.y})" +
+			$"\n Offset: {LocationManager.Instance.LocationOffset})" +
+			$"\n True Geo: {Input.location.lastData.LocationToMeters()})\n\n";
 	}
 
 	private void OnDestroy()

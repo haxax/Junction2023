@@ -10,12 +10,18 @@ public class PlayerPcDemoMovement : MonoBehaviour
 
 	void Start()
 	{
+		LocationManager.Instance.OnLocationChanged += LocationUpdate;
 
+		targetLocation = new LocationCoordinate(Vector2.zero, Vector2.zero);
+		prevTile = (999, 999);
+		TryCaptureTile();
 	}
 
 	private Vector2 movementAmount = Vector2.zero;
 	private (float, float, float, float) keyTimers = new(0f, 0f, 0f, 0f);
-	private (int, int) prevTile = (0, 0);
+	private (int, int) prevTile = (999, 999);
+
+	private LocationCoordinate targetLocation = null;
 
 	void Update()
 	{
@@ -32,11 +38,20 @@ public class PlayerPcDemoMovement : MonoBehaviour
 
 		if (movementAmount != Vector2.zero) { LocationManager.Instance.SpoofLocationAdditive(movementAmount); }
 
-		transform.position += (LocationManager.Instance.CurrentLocation.CurrentPosition - transform.position) * Time.deltaTime * movementSpeed;
-		if (LocationManager.Instance.CurrentLocation.CurrentPosition.x - transform.position.x < 0f) { graphicsPivot.localScale = new Vector3(-1, 1, 1); }
+		transform.position += (targetLocation.CurrentPosition - transform.position) * Time.deltaTime * movementSpeed;
+		if (targetLocation.CurrentPosition.x - transform.position.x < 0f) { graphicsPivot.localScale = new Vector3(-1, 1, 1); }
 		else { graphicsPivot.localScale = new Vector3(1, 1, 1); }
 
+		TryCaptureTile();
+	}
 
+	public void LocationUpdate(LocationCoordinate location)
+	{
+		targetLocation = location;
+	}
+
+	private void TryCaptureTile()
+	{
 		(int, int) newTile = (Mathf.RoundToInt(transform.position.x), Mathf.RoundToInt(transform.position.y));
 		if (newTile != prevTile)
 		{

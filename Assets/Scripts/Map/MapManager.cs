@@ -31,11 +31,15 @@ public class MapManager : Singleton<MapManager>
 		TargetCamera = Camera.main;
 		NodesPerScale = defaultNodesPerScale;
 
-		CornerNodeCoordinate = (0, 0);
-
 		FreeNodes.Clear();
 
 		UpdateCameraSize();
+
+		CornerNodeCoordinate = (0 - Mathf.CeilToInt(NodeCounts.Item1 / 2f), 0 - Mathf.CeilToInt(NodeCounts.Item2 / 2f));
+
+		TargetRenderer.Reset();
+		TargetRenderer.UpdateMesh();
+		TargetRenderer.GenerateMesh();
 	}
 
 	public void UpdateCameraSize()

@@ -12,7 +12,7 @@ public class QuickSpawn : MonoBehaviour
 	[ContextMenu("Spawn")]
 	public void Spawn()
 	{
-		if (spawnAtCurrentLocation) { prefab.Spawn(); }
+		if (spawnAtCurrentLocation) { prefab.Spawn(transform.position); }
 		else { prefab.Spawn(Location); }
 	}
 }

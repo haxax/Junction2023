@@ -5,66 +5,80 @@ using UnityEngine;
 
 public class LocationManager : Singleton<LocationManager>
 {
-    [SerializeField] private float refreshFrequency = 1.0f;
-    [SerializeField] private float accuracyInMeters = 10f;
+	[SerializeField] private float refreshFrequency = 1.0f;
+	[SerializeField] private float accuracyInMeters = 1f;
 
-    private float refreshTimer = 1.0f;
+	private float refreshTimer = 1.0f;
 
-    private LocationCoordinate currentLocation;
-    public LocationCoordinate CurrentLocation
-    {
-        get => currentLocation;
-        set
-        {
-            if (value.CurrentCoordinate != currentLocation.CurrentCoordinate)
-            {
-                currentLocation = value;
-                OnLocationChanged.Invoke(currentLocation);
-            }
-        }
-    }
-    public event Action<LocationCoordinate> OnLocationChanged;
+	public Vector2 LocationOffset { get; private set; } = Vector2.zero;
 
-    protected override void Awake()
-    {
-        base.Awake();
+	private LocationCoordinate currentLocation;
+	public LocationCoordinate CurrentLocation
+	{
+		get => currentLocation;
+		set
+		{
+			if (value.CurrentCoordinate != currentLocation.CurrentCoordinate)
+			{
+				if (LocationOffset == Vector2.zero && value.CurrentCoordinate.magnitude > 1000f)
+				{ 
+					LocationOffset = value.CurrentCoordinate;
+					value = new LocationCoordinate(value.CurrentCoordinate - LocationOffset, value.PreviousCoordinate);
+				}
+				currentLocation = value;
 
-        currentLocation = new LocationCoordinate(Vector2.zero, Vector2.zero);
-        StartTracking();
-        refreshTimer = refreshFrequency;
-    }
+				OnLocationChanged.Invoke(currentLocation);
+			}
+		}
+	}
+	public event Action<LocationCoordinate> OnLocationChanged;
 
-    private void FixedUpdate()
-    {
-        LocationUpdate();
-    }
+	protected override void Awake()
+	{
+		if (Application.isMobilePlatform)
+		{
+			Application.targetFrameRate = 30;
+			QualitySettings.vSyncCount = 0;
+		}
 
-    private void LocationUpdate()
-    {
-        if (Input.location.status != LocationServiceStatus.Running) { return; }
+		base.Awake();
 
-        refreshTimer -= Time.fixedDeltaTime;
-        if (refreshTimer > 0f) { return; }
+		currentLocation = new LocationCoordinate(Vector2.zero, Vector2.zero);
+		StartTracking();
+		refreshTimer = refreshFrequency;
+	}
 
-        refreshTimer += refreshFrequency;
+	private void FixedUpdate()
+	{
+		LocationUpdate();
+	}
 
-        CurrentLocation = new LocationCoordinate(Input.location.lastData, CurrentLocation);
-    }
+	private void LocationUpdate()
+	{
+		if (Input.location.status != LocationServiceStatus.Running) { return; }
 
-    public void StartTracking()
-    {
-        if (Input.location.status == LocationServiceStatus.Initializing || Input.location.status == LocationServiceStatus.Running) { return; }
+		refreshTimer -= Time.fixedDeltaTime;
+		if (refreshTimer > 0f) { return; }
 
-        Input.location.Start(accuracyInMeters, accuracyInMeters / 2.0f);
-    }
+		refreshTimer += refreshFrequency;
 
-    public void StopTracking()
-    {
-        Input.location.Stop();
-    }
+		CurrentLocation = new LocationCoordinate(Input.location.lastData, CurrentLocation);
+	}
 
-    public void SpoofLocationAdditive(Vector2 amount)
-    {
-        CurrentLocation = new LocationCoordinate(CurrentLocation.CurrentCoordinate + amount, CurrentLocation.CurrentCoordinate);
-    }
+	public void StartTracking()
+	{
+		if (Input.location.status == LocationServiceStatus.Initializing || Input.location.status == LocationServiceStatus.Running) { return; }
+
+		Input.location.Start(accuracyInMeters, accuracyInMeters / 2.0f);
+	}
+
+	public void StopTracking()
+	{
+		Input.location.Stop();
+	}
+
+	public void SpoofLocationAdditive(Vector2 amount)
+	{
+		CurrentLocation = new LocationCoordinate(CurrentLocation.CurrentCoordinate + amount, CurrentLocation.CurrentCoordinate);
+	}
 }
